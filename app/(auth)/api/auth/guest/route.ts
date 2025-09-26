@@ -1,6 +1,3 @@
-import { signIn } from '@/app/(auth)/auth';
-import { isDevelopmentEnvironment } from '@/lib/constants';
-import { getToken } from 'next-auth/jwt';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -25,17 +22,29 @@ export async function GET(request: Request) {
       );
     }
 
-    const token = await getToken({
-      req: request,
-      secret: process.env.AUTH_SECRET,
-      secureCookie: !isDevelopmentEnvironment,
-    });
-
-    if (token) {
-      return NextResponse.redirect(new URL('/', request.url));
+    // Validate and decode the redirect URL
+    let decodedRedirectUrl: string;
+    try {
+      decodedRedirectUrl = decodeURIComponent(redirectUrl);
+      // Ensure it's a valid URL or path - only allow relative paths for security
+      if (!decodedRedirectUrl.startsWith('/')) {
+        decodedRedirectUrl = '/';
+      }
+      // Remove any potential query parameters that might cause issues
+      const url = new URL(decodedRedirectUrl, 'http://localhost');
+      decodedRedirectUrl = url.pathname;
+    } catch {
+      decodedRedirectUrl = '/';
     }
 
-    return await signIn('guest', { redirect: true, redirectTo: redirectUrl });
+    // Use NextAuth's built-in signin endpoint for guest
+    const baseUrl = new URL(request.url).origin;
+    const callbackUrl = encodeURIComponent(`${baseUrl}${decodedRedirectUrl}`);
+
+    // Redirect to NextAuth's built-in signin endpoint for guest
+    const signInUrl = `${baseUrl}/api/auth/signin/guest?callbackUrl=${callbackUrl}`;
+    
+    return NextResponse.redirect(signInUrl);
   } catch (error) {
     console.error('Guest authentication error:', error);
     return NextResponse.json(
