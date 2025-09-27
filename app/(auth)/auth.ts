@@ -40,8 +40,8 @@ export const {
   ...authConfig,
   providers: [
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     }),
     Credentials({
       credentials: {},
@@ -79,14 +79,14 @@ export const {
   callbacks: {
     async signIn({ user, account }) {
       // Handle OAuth providers (Google, etc.)
-      if (account?.provider === 'google') {
+      if (account?.provider === 'google' && user.email) {
         try {
           // Check if user exists
-          const existingUsers = await getUser(user.email!);
+          const existingUsers = await getUser(user.email);
           
           if (existingUsers.length === 0) {
             // Create new user for OAuth
-            await createUser(user.email!, null); // No password for OAuth users
+            await createUser(user.email, null); // No password for OAuth users
           }
           
           return true;
@@ -101,8 +101,8 @@ export const {
     async jwt({ token, user, account }) {
       if (user) {
         // For OAuth users, get/set user data
-        if (account?.provider === 'google') {
-          const dbUsers = await getUser(user.email!);
+        if (account?.provider === 'google' && user.email) {
+          const dbUsers = await getUser(user.email);
           if (dbUsers.length > 0) {
             token.id = dbUsers[0].id;
             token.type = 'regular';
