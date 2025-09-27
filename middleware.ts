@@ -13,7 +13,10 @@ export async function middleware(request: NextRequest) {
     return new Response('pong', { status: 200 });
   }
 
-  if (pathname.startsWith('/api/auth')) {
+  // Skip authentication for NextAuth API routes and other API endpoints
+  if (pathname.startsWith('/api/auth') || 
+      pathname.startsWith('/api/health') ||
+      pathname.startsWith('/api/_next')) {
     return NextResponse.next();
   }
 

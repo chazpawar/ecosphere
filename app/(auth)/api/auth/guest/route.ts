@@ -6,21 +6,34 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const redirectUrl = searchParams.get('redirectUrl') || '/';
 
-    // Check if required environment variables are set
-    if (!process.env.AUTH_SECRET) {
-      console.error('AUTH_SECRET environment variable is not set');
-      return NextResponse.json(
-        { error: 'Authentication not configured properly' },
-        { status: 500 }
-      );
-    }
+    console.log('Guest auth request:', {
+      url: request.url,
+      redirectUrl,
+      NODE_ENV: process.env.NODE_ENV,
+      AUTH_SECRET: process.env.AUTH_SECRET ? 'set' : 'not set',
+      NEXTAUTH_URL: process.env.NEXTAUTH_URL ? process.env.NEXTAUTH_URL : 'not set'
+    });
 
-    if (!process.env.NEXTAUTH_URL) {
-      console.error('NEXTAUTH_URL environment variable is not set');
-      return NextResponse.json(
-        { error: 'Authentication URL not configured' },
-        { status: 500 }
-      );
+    // In development, be more lenient with environment variables
+    const isDevelopment = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+    
+    if (!isDevelopment) {
+      // Only enforce strict checks in production
+      if (!process.env.AUTH_SECRET) {
+        console.error('AUTH_SECRET environment variable is not set');
+        return NextResponse.json(
+          { error: 'Authentication not configured properly' },
+          { status: 500 }
+        );
+      }
+      
+      if (!process.env.NEXTAUTH_URL) {
+        console.error('NEXTAUTH_URL environment variable is not set in production');
+        return NextResponse.json(
+          { error: 'Authentication URL not configured' },
+          { status: 500 }
+        );
+      }
     }
 
     // Validate and decode the redirect URL

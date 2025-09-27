@@ -13,6 +13,7 @@ const authFormSchema = z.object({
 
 export interface LoginActionState {
   status: 'idle' | 'in_progress' | 'success' | 'failed' | 'invalid_data';
+  shouldRedirect?: boolean;
 }
 
 export const login = async (
@@ -25,14 +26,20 @@ export const login = async (
       password: formData.get('password'),
     });
 
-    await signIn('credentials', {
+    const result = await signIn('credentials', {
       email: validatedData.email,
       password: validatedData.password,
       redirect: false,
     });
 
-    return { status: 'success' };
+    if (result?.error) {
+      console.error('Login failed:', result.error);
+      return { status: 'failed' };
+    }
+
+    return { status: 'success', shouldRedirect: true };
   } catch (error) {
+    console.error('Login error:', error);
     if (error instanceof z.ZodError) {
       return { status: 'invalid_data' };
     }
@@ -49,6 +56,7 @@ export interface RegisterActionState {
     | 'failed'
     | 'user_exists'
     | 'invalid_data';
+  shouldRedirect?: boolean;
 }
 
 export const register = async (
@@ -61,20 +69,28 @@ export const register = async (
       password: formData.get('password'),
     });
 
-    const [user] = await getUser(validatedData.email);
+    const users = await getUser(validatedData.email);
 
-    if (user) {
+    if (users.length > 0) {
       return { status: 'user_exists' } as RegisterActionState;
     }
+    
     await createUser(validatedData.email, validatedData.password);
-    await signIn('credentials', {
+    
+    const result = await signIn('credentials', {
       email: validatedData.email,
       password: validatedData.password,
       redirect: false,
     });
 
-    return { status: 'success' };
+    if (result?.error) {
+      console.error('Register signin failed:', result.error);
+      return { status: 'failed' };
+    }
+
+    return { status: 'success', shouldRedirect: true };
   } catch (error) {
+    console.error('Register error:', error);
     if (error instanceof z.ZodError) {
       return { status: 'invalid_data' };
     }

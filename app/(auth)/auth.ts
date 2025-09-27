@@ -1,7 +1,8 @@
 import { compareSync } from 'bcryptjs';
 import NextAuth, { type DefaultSession } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
-import { createGuestUser, getUser } from '@/lib/db/queries';
+import Google from 'next-auth/providers/google';
+import { createGuestUser, getUser, createUser } from '@/lib/db/queries';
 import { authConfig } from './auth.config';
 import { getDummyPassword } from '@/lib/constants';
 import type { DefaultJWT } from 'next-auth/jwt';
@@ -38,6 +39,10 @@ export const {
 } = NextAuth({
   ...authConfig,
   providers: [
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     Credentials({
       credentials: {},
       async authorize({ email, password }: any) {
@@ -72,10 +77,41 @@ export const {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account }) {
+      // Handle OAuth providers (Google, etc.)
+      if (account?.provider === 'google') {
+        try {
+          // Check if user exists
+          const existingUsers = await getUser(user.email!);
+          
+          if (existingUsers.length === 0) {
+            // Create new user for OAuth
+            await createUser(user.email!, null); // No password for OAuth users
+          }
+          
+          return true;
+        } catch (error) {
+          console.error('OAuth sign-in error:', error);
+          return false;
+        }
+      }
+      
+      return true;
+    },
+    async jwt({ token, user, account }) {
       if (user) {
-        token.id = user.id as string;
-        token.type = user.type;
+        // For OAuth users, get/set user data
+        if (account?.provider === 'google') {
+          const dbUsers = await getUser(user.email!);
+          if (dbUsers.length > 0) {
+            token.id = dbUsers[0].id;
+            token.type = 'regular';
+          }
+        } else {
+          // For credentials users
+          token.id = user.id as string;
+          token.type = user.type;
+        }
       }
 
       return token;
