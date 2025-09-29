@@ -11,7 +11,7 @@ export const entitlementsByUserType: Record<UserType, Entitlements> = {
    * For users without an account
    */
   guest: {
-    maxMessagesPerDay: 20,
+    maxMessagesPerDay:1, 
     availableChatModelIds: ['gemini-2.5-flash', 'gemini-2.5-pro'],
   },
 
@@ -26,4 +26,4 @@ export const entitlementsByUserType: Record<UserType, Entitlements> = {
   /*
    * TODO: For users with an account and a paid membership
    */
-};
+}; 

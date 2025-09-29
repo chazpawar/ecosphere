@@ -52,7 +52,7 @@ export async function getUser(email: string): Promise<Array<User>> {
     );
   }
 }
-
+ 
 export async function createUser(email: string, password: string | null) {
   const hashedPassword = password ? generateHashedPassword(password) : null;
 

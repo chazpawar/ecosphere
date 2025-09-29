@@ -13,7 +13,7 @@ interface RequestSuggestionsProps {
 }
 
 export const requestSuggestions = ({
-  session,
+  session, 
   dataStream,
 }: RequestSuggestionsProps) =>
   tool({
