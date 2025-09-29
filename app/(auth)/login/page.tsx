@@ -109,7 +109,7 @@ export default function Page() {
           <button
             type="button"
             onClick={() => signIn('google', { callbackUrl: '/' })}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-white bg-[#272725] hover:bg-[#373735] transition-colors duration-300"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-white bg-[#272725] hover:bg-[#373735] transition-colors duration-300"
           >
             <svg className="size-5" viewBox="0 0 24 24">
               <path
